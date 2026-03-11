@@ -1,20 +1,27 @@
 # MedGemma Skills
 
-Google'ın açık kaynak tıbbi AI modeli [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it) için hazır skill dosyaları. Claude Desktop, ChatGPT veya herhangi bir LLM ile kullanılabilir.
+Google'ın açık kaynak tıbbi AI modeli [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it) için hazır skill dosyaları. Cursor, Claude Code, Antigravity veya herhangi bir AI IDE ile kullanılabilir.
 
 ## Ne İşe Yarar?
 
-Bir LLM'e "skill" (özel talimat) ekleyerek onu **tıbbi görüntü analizi** ve **genel tıbbi asistanlık** konusunda uzmanlaştırabilirsiniz. Teknik bilgi gerekmez.
+Bu repo'yu bir AI IDE'de (Cursor, Antigravity, Claude Code) açtığınızda, AI asistanınız otomatik olarak:
+- **Tıbbi görüntüleri** MedGemma ile analiz eder (X-ray, CT, MRI)
+- **Lab sonuçlarını** yorumlar, **ilaç etkileşimlerini** kontrol eder
+- Sonuçları Türkçe yapılandırılmış rapor olarak sunar
 
 ## Yapı
 
 ```
 medgemma-skills/
+├── CLAUDE.md                      ← Claude Code / Cowork talimatları
+├── .cursorrules                   ← Cursor / Antigravity talimatları
+├── medgemma_api.py                ← MedGemma API client (Modal endpoint)
+├── sample-xrays.zip               ← Test görselleri (ZIP — 1.7 MB)
 ├── skills/
-│   ├── radiology-skill.md         ← Tıbbi görüntü analizi (X-ray, CT, MRI)
-│   └── medical-assistant-skill.md ← Lab sonuçları, ilaç, semptom
+│   ├── radiology-skill.md         ← Tıbbi görüntü analizi
+│   └── medical-assistant-skill.md ← Lab, ilaç, semptom
 ├── images/                        ← Kendi görsellerinizi buraya atın
-└── sample-xrays/                  ← Test için örnek görseller
+└── sample-xrays/                  ← Hazır test görselleri
     ├── normal/                    ← 3 normal göğüs X-ray
     ├── pneumonia/                 ← 2 pnömoni X-ray
     └── temporal/                  ← 3 günlük progresyon serisi
@@ -22,49 +29,68 @@ medgemma-skills/
 
 ## Hızlı Başlangıç
 
-### Claude Desktop / Cowork
+### Cursor / Antigravity / Claude Code
 
-1. Bu repo'yu klonlayın veya ZIP olarak indirin
-2. Claude Desktop'ta **Projects** > yeni proje oluşturun
-3. `skills/` klasöründeki `.md` dosyalarını projeye **Custom Instructions** olarak ekleyin
-4. Görsellerinizi `images/` klasörüne koyun
-5. Claude'a sorun: *"images klasöründeki görselleri analiz et"*
+1. Repo'yu klonlayın:
+   ```bash
+   git clone https://github.com/burakcanpolat/medgemma-skills.git
+   ```
+2. IDE'nizde açın (Cursor, Antigravity, veya Claude Code)
+3. AI asistana sorun:
+   - *"sample-xrays klasöründeki normal X-ray'i analiz et"*
+   - *"sample-xrays.zip dosyasını aç ve analiz et"*
+   - *"images klasöründeki görselleri incele"*
 
-### ChatGPT
+AI asistan otomatik olarak `medgemma_api.py` üzerinden MedGemma'ya görüntü gönderir ve Türkçe formatlanmış rapor döndürür.
 
-1. `skills/medical-assistant-skill.md` dosyasını açın
-2. İçeriği kopyalayın
-3. ChatGPT > **Customize ChatGPT** > **Custom Instructions** alanına yapıştırın
+### Kendi Görsellerinizi Kullanma
 
-### Diğer LLM'ler (Gemini, Copilot, Mistral...)
+1. Görsellerinizi `images/` klasörüne koyun (veya ZIP olarak atın)
+2. AI asistana sorun: *"images klasöründekileri analiz et"*
 
-1. `skills/` klasöründeki istediğiniz skill dosyasını açın
-2. İçeriği kopyalayın
-3. İlgili platformun system prompt / custom instruction alanına yapıştırın
+### Manuel Kullanım (Terminal)
+
+```bash
+# Tek görüntü
+python medgemma_api.py images/xray.jpeg
+
+# Çoklu görüntü (karşılaştırmalı)
+python medgemma_api.py images/day0.jpg images/day1.jpg images/day2.jpg
+
+# ZIP dosyası
+python medgemma_api.py sample-xrays.zip
+```
+
+## MedGemma Pipeline
+
+```
+Görüntü (JPEG/PNG/ZIP)
+        ↓
+medgemma_api.py → Modal API (MedGemma 1.5 4B-it)
+        ↓
+Ham İngilizce analiz
+        ↓
+AI Asistan → Türkçe yapılandırılmış rapor
+  ├── BULGULAR
+  ├── İZLENİM
+  ├── GÜVEN SEVİYESİ (🟢🟡🔴)
+  └── ÖNERİLER
+```
 
 ## Örnek Kullanım
 
-### Radyoloji
-> "images klasöründeki X-ray'i analiz et"
+### Radyoloji (Görüntü)
+> "sample-xrays/temporal klasöründeki 3 görseli karşılaştır, progresyonu değerlendir"
 
-> "sample-xrays/temporal klasöründeki 3 görseli karşılaştır, hastalık progresyonunu değerlendir"
-
-> "Bu ZIP dosyasını aç ve içindeki görselleri incele"
-
-### Tıbbi Asistan
+### Tıbbi Asistan (Metin)
 > "WBC: 12.500, Hb: 9.2, MCV: 68, Ferritin: 8 — bu değerleri yorumla"
 
-> "Metformin 1000mg, Ramipril 5mg, Aspirin 100mg kullanıyorum. Etkileşim var mı?"
+> "Metformin 1000mg, Ramipril 5mg, Aspirin 100mg — etkileşim var mı?"
 
-## Örnek Görseller
+## Gereksinimler
 
-`sample-xrays/` klasöründe test için hazır görseller bulunur:
-
-| Klasör | İçerik | Kaynak |
-|--------|--------|--------|
-| `normal/` | 3 normal göğüs X-ray | Kaggle COVID-19 X-ray Dataset |
-| `pneumonia/` | 2 pnömoni X-ray | Kaggle COVID-19 X-ray Dataset |
-| `temporal/` | 3 günlük progresyon serisi | Kaggle COVID-19 X-ray Dataset |
+- Python 3.8+ (ek paket gerekmez — sadece stdlib)
+- İnternet bağlantısı (Modal API için)
 
 ## Sorumluluk Reddi
 

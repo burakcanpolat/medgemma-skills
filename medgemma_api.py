@@ -1,17 +1,38 @@
 """
 MedGemma API Client
 Modal üzerinde deploy edilmiş MedGemma modeline görüntü gönderir.
+ZIP dosyalarını otomatik çıkartır.
 """
 
 import base64
 import json
 import sys
+import zipfile
+import tempfile
 import urllib.request
 import ssl
 from pathlib import Path
 
 ENDPOINT = "https://burakcanpolat--medgemma-vllm-serve.modal.run/v1/chat/completions"
 MODEL = "google/medgemma-1.5-4b-it"
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
+
+
+def extract_zip(zip_path: str, output_dir: str = "images") -> list[str]:
+    """ZIP dosyasını çıkartır, görüntü dosyalarının yollarını döndürür."""
+    out = Path(output_dir)
+    out.mkdir(exist_ok=True)
+    extracted = []
+
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        for name in zf.namelist():
+            if Path(name).suffix.lower() in IMAGE_EXTENSIONS and not name.startswith("__MACOSX"):
+                zf.extract(name, out)
+                extracted.append(str(out / name))
+
+    extracted.sort()
+    print(f"ZIP'ten {len(extracted)} görüntü çıkartıldı: {output_dir}/")
+    return extracted
 
 
 def analyze_image(image_path: str, prompt: str = "Analyze this medical image. Provide detailed findings.") -> str:
@@ -82,11 +103,27 @@ def analyze_multiple(image_paths: list[str], prompt: str = "Compare these medica
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Kullanım: python medgemma_api.py <görüntü_yolu> [görüntü2] [görüntü3]")
+        print("Kullanım:")
+        print("  python medgemma_api.py görüntü.jpeg")
+        print("  python medgemma_api.py görüntü1.jpg görüntü2.jpg görüntü3.jpg")
+        print("  python medgemma_api.py görseller.zip")
         sys.exit(1)
 
-    paths = sys.argv[1:]
-    if len(paths) == 1:
-        print(analyze_image(paths[0]))
+    input_path = sys.argv[1]
+
+    # ZIP dosyası kontrolü
+    if input_path.lower().endswith(".zip"):
+        images = extract_zip(input_path)
+        if not images:
+            print("HATA: ZIP içinde görüntü dosyası bulunamadı.")
+            sys.exit(1)
+        if len(images) == 1:
+            print(analyze_image(images[0]))
+        else:
+            print(analyze_multiple(images))
     else:
-        print(analyze_multiple(paths))
+        paths = sys.argv[1:]
+        if len(paths) == 1:
+            print(analyze_image(paths[0]))
+        else:
+            print(analyze_multiple(paths))
