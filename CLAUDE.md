@@ -31,9 +31,15 @@ Tıbbi görüntü analizi için kendi vision yeteneğini DEĞİL, MedGemma model
 - Kullanıcı "images klasöründekileri analiz et" derse, klasördeki tüm görselleri sırayla analiz et
 - `sample-xrays/` klasöründe test için hazır örnek görseller var
 
-## Dil
+## Rapor Kaydetme
 
-Türkçe yanıt ver. Tıbbi terimleri hem Türkçe hem İngilizce/Latince yaz.
+Her analiz sonrası raporu `reports/` klasörüne markdown olarak kaydet:
+- Dosya adı: `YYYY-MM-DD_görüntü-adı_rapor.md`
+- Çoklu analiz: `YYYY-MM-DD_toplu-analiz_rapor.md`
+
+## Dil ve Üslup
+
+Türkçe yanıt ver. Tıp bilgisi olmayan sıradan birinin anlayacağı sade dil kullan. Tıbbi terim kullanman gerektiğinde parantez içinde günlük dilde açıklama ekle.
 
 ## Önemli
 
