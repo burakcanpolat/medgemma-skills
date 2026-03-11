@@ -1,3 +1,8 @@
+---
+description: MedGemma tıbbi görüntü analizi ve tıbbi asistanlık kuralları
+alwaysApply: true
+---
+
 # MedGemma Skills
 
 Tıbbi görüntü analizi ve genel tıbbi asistanlık projesi. MedGemma (Modal) + AI asistan pipeline.
