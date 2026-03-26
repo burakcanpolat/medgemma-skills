@@ -61,8 +61,12 @@ cd med-rehber
 setup.bat
 ```
 
-**AI Editor ile (en kolayı):**
-Repo'yu Zed, Cursor veya Claude Code ile acin — AI asistan ilk acilista kurulum sihirbazini otomatik baslatir.
+**AI Editor ile (en kolayi):**
+Repo'yu Zed, Cursor veya Claude Code ile acin ve AI asistana yazin:
+
+> **"kurulumu baslat"**
+
+AI sizi adim adim yonlendirecek: Python kontrolu, ayar dosyasi olusturma, baglanti testi, ilk analiz.
 
 ---
 
