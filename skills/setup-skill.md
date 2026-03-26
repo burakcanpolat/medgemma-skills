@@ -1,25 +1,28 @@
-# Kurulum Skill'i
+# Setup Skill
 
-Bu skill, AI asistanin kullaniciyi adim adim kurulum surecinden gecirmesi icin talimatlar icerir.
+This skill guides non-technical users through the complete Med-Rehber setup from scratch.
 
-Detayli talimatlar: `.agents/skills/medgemma-setup/SKILL.md`
+Detailed instructions: `.agents/skills/medgemma-setup/SKILL.md`
 
-## Ozet Akis
+## Summary Flow
 
 ```
-ADIM 0: Hos geldiniz mesaji
-ADIM 1: Python kontrolu (yoksa kurulum rehberi)
-ADIM 2: .env dosyasi kontrolu
-ADIM 3: Modal hesabi + CLI (opsiyonel)
-ADIM 4: .env dosyasi olusturma
-ADIM 5: Baglanti testi
-ADIM 6: Ilk analiz denemesi
-ADIM 7: Tamamlandi + kullanim rehberi
+STEP 0:  Welcome + language selection
+STEP 1:  Editor check (Zed / Cursor / Claude Code)
+STEP 2:  Python 3.10+ check / install
+STEP 3:  Modal account creation (free, modal.com/signup)
+STEP 4:  Modal CLI install + auth (modal setup)
+STEP 5:  HuggingFace account + token + model license
+STEP 6:  Deploy MedGemma (modal deploy scripts/modal_medgemma.py)
+STEP 7:  Create .env with endpoint URL
+STEP 8:  Connection test
+STEP 9:  First analysis trial (user picks from 3 options)
+STEP 10: Complete + usage guide
 ```
 
-## Tetikleme
+## Triggers
 
-Kullanici su kelimeleri soylediginde bu skill'i uygula:
-- "kurulum", "setup", "basla", "nasil kullanilir"
-- "ilk kez kullaniyorum", "ne yapmam lazim"
-- .env dosyasi yoksa otomatik tetikle
+Apply this skill when the user says:
+- "setup", "install", "kurulum", "get started", "start setup"
+- "first time", "how to use", "what do I need to do"
+- Automatically trigger if `.env` file does not exist

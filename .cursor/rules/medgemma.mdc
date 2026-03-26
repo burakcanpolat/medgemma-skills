@@ -1,57 +1,85 @@
 ---
-description: MedGemma tıbbi görüntü analizi ve tıbbi asistanlık
+description: MedGemma medical image analysis and medical assistant
 alwaysApply: true
 ---
 
 # Med-Rehber
 
-Tıbbi görüntü analizi ve genel tıbbi asistanlık projesi.
+Medical image analysis and general medical assistant project.
 
-## Hasta Bilgisi Toplama (Intake)
+## Language Preference
 
-Analiz yapmadan ÖNCE, kullanıcıdan şu bilgileri al (tek tek sor):
+At the start of every conversation, check `reports/user_config.md`.
 
-1. **Bu rapor kimin için?** (kendisi / yakını / genel bilgi)
-2. **Yaş ve cinsiyet**
-3. **Şikayet/neden** — "Neden bu tetkik yapıldı?"
-4. **Bilinen hastalıklar** (varsa)
-5. **Kullanılan ilaçlar** (varsa)
+- If the file exists and contains a `language:` field → use that language.
+- If the file does not exist:
+  1. Ask: "🌐 Please choose your language / Lütfen dilinizi seçin: 1. 🇬🇧 English  2. 🇹🇷 Türkçe"
+  2. Save the choice to `reports/user_config.md` (e.g., `language: en` or `language: tr`)
+  3. Confirm in the chosen language and proceed.
 
-Bu bilgileri `reports/hasta_bilgisi.md` dosyasına kaydet. Sonraki analizlerde bu dosyayı oku — tekrar sorma.
+**All communication, reports, and analysis output MUST be in the user's chosen language.**
 
-Acil durum belirtisi varsa → intake'i kes, 112'yi öner.
+## First-Run Check
 
-## İlk Kullanım Kontrolü
+After setting the language, check if `.env` exists. If missing:
+1. Tell the user: "Welcome! This looks like your first time. Shall we set things up together?"
+2. If they agree, read `skills/setup-skill.md` and start the setup wizard
+3. Do not perform any analysis until setup is complete
 
-Konuşma başladığında `.env` dosyasını kontrol et. Dosya yoksa veya boşsa:
-1. Kullanıcıya "Merhaba! İlk kullanım gibi görünüyor. Kurulumu birlikte yapalım mı?" de
-2. Kullanıcı onaylarsa `skills/setup-skill.md` oku ve kurulum sihirbazını başlat
-3. Kurulum tamamlanana kadar analiz yapma
+If the user says "setup", "install", "kurulum", "get started" → read `skills/setup-skill.md`.
+If the user says "help", "yardım" → show the help section from the setup skill.
 
-Kullanıcı "kurulum", "setup", "başla", "nasıl kullanılır" derse → `skills/setup-skill.md` oku.
+## Skill Routing
 
-## Skill Yönlendirme
+- **Setup / install** → `skills/setup-skill.md`
+- **Medical images** → `skills/radiology-skill.md`
+- **Lab, medications, symptoms** → `skills/medical-assistant-skill.md`
 
-- **Kurulum / setup** → `skills/setup-skill.md`
-- **Tıbbi görüntü** → `skills/radiology-skill.md`
-- **Lab, ilaç, semptom** → `skills/medical-assistant-skill.md`
+## Patient Intake
+
+Only AFTER setup is complete and `.env` exists. Before any analysis, collect from the user (one at a time, in their language):
+
+1. **Who is this report for?** (themselves / a relative / general information)
+2. **Age and gender**
+3. **Complaint/reason** — "Why was this test done?"
+4. **Known medical conditions** (if any)
+5. **Current medications** (if any)
+
+Save this to `reports/patient_info.md`. On subsequent analyses, read this file — do not ask again.
+Always use the filename `patient_info.md` (in English) regardless of the user's language preference.
+
+If emergency signs are present → stop intake, recommend calling emergency services (112 in Turkey, or local number).
 
 ## MedGemma Pipeline
 
-Görüntü analizi için `scripts/medgemma_api.py` kullan:
+For image analysis, use `scripts/medgemma_api.py`:
 
+```bash
+python3 scripts/medgemma_api.py images/xray.jpeg
+python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg
+
+# ZIP or large studies (volume mode — uploads to Modal Volume first)
+python3 scripts/medgemma_api.py --volume archive.zip
+python3 scripts/medgemma_api.py --volume img1.jpg img2.jpg img3.jpg
 ```
-python scripts/medgemma_api.py images/xray.jpeg
-python scripts/medgemma_api.py images/d0.jpg images/d1.jpg
-python scripts/medgemma_api.py gorseller.zip
+
+Each series is independent: ≤85 → single request, >85 → batched in groups of 85.
+**When to use --volume:** For ZIP files or more than ~5 images.
+MedGemma outputs in English → translate to user's language in plain, simple terms.
+
+## Modal Deployment
+
+The MedGemma server runs on Modal. Deploy script: `scripts/modal_medgemma.py`.
+
+```bash
+modal deploy scripts/modal_medgemma.py
 ```
 
-Her seri bağımsız: ≤85 → tek istek, >85 → 85'lik batch. MedGemma İngilizce çıktı verir → sen Türkçe sade rapora dönüştür.
+## Report Saving
 
-## Rapor Kaydetme
+Save reports as `reports/YYYY-MM-DD_short-description_report.md`.
 
-`reports/YYYY-MM-DD_kisa-aciklama_rapor.md` formatında kaydet.
+## Language & Style
 
-## Dil
-
-Türkçe, sade, herkesin anlayacağı. Tıbbi terim gerekirse parantez içinde açıkla.
+Use simple, plain language that anyone can understand — in the user's chosen language.
+If medical terms are needed, explain them in parentheses.

@@ -22,3 +22,13 @@ reports/*
 
 # Claude internals
 .claude/
+
+# Virtual environments
+venv/
+.venv/
+
+# Node modules
+node_modules/
+
+# Log files
+*.log

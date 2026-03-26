@@ -1,123 +1,156 @@
 # Med-Rehber
 
-Tibbi sonuclarinizi herkesin anlayacagi dile ceviren AI rehberiniz. [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it) destekli. **Zed**, **Cursor** ve **Claude Code** ile calisir.
+Your AI guide for understanding medical results in plain language. Powered by [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it). Works with **Zed**, **Cursor**, and **Claude Code**.
 
-> **English:** Your AI guide for understanding medical results in plain language. Powered by MedGemma. Works with Zed, Cursor, and Claude Code. [Jump to English setup](#english-setup)
+> **Türkçe:** Tıbbi sonuçlarınızı herkesin anlayacağı dile çeviren AI rehberiniz. MedGemma destekli. Zed, Cursor ve Claude Code ile çalışır. [Türkçe kurulum](#turkce-kurulum)
 
 ---
 
-## Ne Yapiyor?
+## What Does It Do?
 
-Bu repo'yu bir AI editorde actiginizda, AI asistaniniz:
-1. Sizden **hasta bilgisi** alir (yas, cinsiyet, sikayet)
-2. Goruntuleri **MedGemma** ile analiz eder
-3. Sonuclari **herkesin anlayacagi sade Turkce** ile raporlar
-4. Raporlari `reports/` klasorune kaydeder
+When you open this repo in an AI editor, the AI assistant will:
+1. Ask you to choose your **language** (English or Turkish)
+2. Collect **patient information** (age, gender, complaint)
+3. Analyze images with **MedGemma**
+4. Report results in **plain, simple language** in your chosen language
+5. Save reports to `reports/`
 
-## Proje Yapisi
+## Project Structure
 
 ```
 med-rehber/
-├── CLAUDE.md                         ← Claude Code + Zed talimatlari
-├── AGENTS.md                         ← Universal talimatlar (Cursor, Zed, Copilot)
-├── .cursor/rules/medgemma.mdc        ← Cursor talimatlari
-├── .agents/skills/                   ← Universal Skills (tum editorler)
-│   ├── medgemma-radiology/SKILL.md   ← Goruntu analizi skill'i
-│   └── medgemma-assistant/SKILL.md   ← Lab/ilac/semptom skill'i
-├── skills/                           ← Okunabilir skill dosyalari
+├── CLAUDE.md                         ← Claude Code + Zed instructions
+├── AGENTS.md                         ← Universal instructions (Cursor, Zed, Copilot)
+├── .cursor/rules/medgemma.mdc        ← Cursor instructions
+├── .gitattributes                    ← Cross-platform line ending rules
+├── .agents/skills/                   ← Universal Skills (all editors)
+│   ├── medgemma-setup/SKILL.md       ← Setup wizard skill
+│   ├── medgemma-radiology/SKILL.md   ← Image analysis skill
+│   └── medgemma-assistant/SKILL.md   ← Lab/drug/symptom skill
+├── skills/                           ← Readable skill files
+│   ├── setup-skill.md
 │   ├── radiology-skill.md
 │   └── medical-assistant-skill.md
 ├── scripts/
-│   └── medgemma_api.py               ← MedGemma API client
-├── setup.sh                          ← Kurulum scripti (macOS/Linux)
-├── setup.bat                         ← Kurulum scripti (Windows)
-├── .zed/settings.json.example        ← Zed + OpenRouter config ornegi
-├── .env.example                      ← Environment variable ornegi
-├── images/                           ← Gorsellerinizi buraya atin
-├── reports/                          ← Raporlar buraya kaydedilir
-└── test/sample-xrays/                ← Test gorselleri
-    ├── normal/                       ← 3 normal X-ray
-    ├── pneumonia/                    ← 2 pnomoni X-ray
-    └── temporal/                     ← 3 zamansal seri
+│   ├── medgemma_api.py               ← MedGemma API client
+│   └── modal_medgemma.py             ← Modal deployment script
+├── setup.sh                          ← Setup script (macOS/Linux)
+├── setup.bat                         ← Setup script (Windows)
+├── .zed/settings.json.example        ← Zed + OpenRouter config example
+├── .env.example                      ← Environment variable template
+├── LICENSE                           ← MIT License
+├── images/                           ← Place your images here
+├── reports/                          ← Reports are saved here
+└── test/
+    ├── sample-xrays.zip              ← Test images archive
+    └── sample-xrays/                 ← Test images
+        ├── normal/                   ← 3 normal X-rays
+        ├── pneumonia/                ← 2 pneumonia X-rays
+        └── temporal/                 ← 3 temporal series
 ```
 
 ---
 
-## Hizli Kurulum (Tek Komut)
+## Quick Setup
 
-Hicbir teknik bilgiye ihtiyaciniz yok. Script sizi adim adim yonlendirir:
+No coding knowledge required. The AI assistant guides you through everything.
 
-**macOS / Linux:**
+### Step 1: Get the project
+
+**Option A — Download ZIP (easiest):**
+Go to https://github.com/burakcanpolat/med-rehber → click the green **"Code"** button → **"Download ZIP"** → extract the folder. The extracted folder will be named `med-rehber-main` — open this folder in your editor.
+
+**Option B — Git clone:**
 ```bash
 git clone https://github.com/burakcanpolat/med-rehber.git
-cd med-rehber
-./setup.sh
 ```
 
-**Windows:**
-```cmd
-git clone https://github.com/burakcanpolat/med-rehber.git
-cd med-rehber
-setup.bat
-```
+### Step 2: Open in an AI editor
 
-**AI Editor ile (en kolayi):**
-Repo'yu Zed, Cursor veya Claude Code ile acin ve AI asistana yazin:
+Download one of these editors and open the med-rehber folder:
 
-> **"kurulumu baslat"**
+| Editor | Download | Best for |
+|--------|----------|----------|
+| **Zed** (recommended) | [zed.dev/download](https://zed.dev/download) | Free, fast, works with any AI model via OpenRouter |
+| **Cursor** | [cursor.com](https://cursor.com) | Built-in AI, familiar VS Code interface |
+| **Claude Code** | `npm install -g @anthropic-ai/claude-code` | Terminal-based, most powerful (requires [Node.js](https://nodejs.org)) |
 
-AI sizi adim adim yonlendirecek: Python kontrolu, ayar dosyasi olusturma, baglanti testi, ilk analiz.
+> **Which editor should I choose?** If you've never programmed before, choose **Zed** — it's free and easy to set up. If you already use VS Code, choose **Cursor**. If you're comfortable with the command line, choose **Claude Code**.
+
+> **Important (Zed users):** Before you can chat with the AI, you need an OpenRouter API key. Get one free at [openrouter.ai/keys](https://openrouter.ai/keys), then add it in Zed: Command Palette → `agent: open settings` → paste your key in the OpenRouter section.
+
+### Step 3: Say "start setup"
+
+Open the AI chat panel in your editor and type:
+
+> **"start setup"**
+
+The AI will guide you through everything step by step:
+- Python installation
+- Modal account (free, $30/month credit)
+- HuggingFace token (free, for AI model access)
+- MedGemma deployment
+- Your first medical image analysis
+
+### Alternative: Quick prerequisites check
+
+If you prefer to check prerequisites before opening an editor:
+
+**macOS / Linux:** `./setup.sh`
+**Windows:** `setup.bat`
+
+These scripts check Python and Modal CLI, then point you to an AI editor for the full setup.
 
 ---
 
-## Detayli Kurulum
+## Detailed Setup
 
-### Zed (Onerilen)
+### Zed (Recommended)
 
-Zed + OpenRouter ile **istediginiz modeli** kullanabilirsiniz (Claude, Gemini, GPT, Llama...).
+With Zed + OpenRouter you can use **any model** (Claude, Gemini, GPT, Llama...).
 
-**1. Zed'i yukleyin**
+**1. Install Zed**
 - [zed.dev/download](https://zed.dev/download) (macOS, Linux, Windows)
 
-**2. OpenRouter API key alin**
-- [openrouter.ai/keys](https://openrouter.ai/keys) adresinden ucretsiz hesap + API key
+**2. Get an OpenRouter API key**
+- [openrouter.ai/keys](https://openrouter.ai/keys) — free account + API key
 
-**3. API key'i Zed'e ekleyin**
-- Zed'i acin → Command Palette → `agent: open settings`
-- OpenRouter bolumune API key'inizi yapistirinzed
-- Veya: `OPENROUTER_API_KEY` environment variable ayarlayin
+**3. Add API key to Zed**
+- Open Zed → Command Palette → `agent: open settings`
+- Paste your API key in the OpenRouter section
+- Or: set the `OPENROUTER_API_KEY` environment variable
 
-**4. Repo'yu acin**
+**4. Open the repo**
 ```bash
 git clone https://github.com/burakcanpolat/med-rehber.git
 cd med-rehber
 ```
-Zed ile klasoru acin. `CLAUDE.md` otomatik olarak AI talimatlariniza yuklenir.
+Open the folder in Zed. `CLAUDE.md` is automatically loaded as AI instructions.
 
-**5. (Opsiyonel) Model ayari**
+**5. (Optional) Model setting**
 ```bash
 cp .zed/settings.json.example .zed/settings.json
 ```
-Varsayilan model: Claude Sonnet 4. Degistirmek icin `settings.json` duzenleyin.
+Default model: Claude Sonnet 4. Edit `settings.json` to change.
 
-**6. Kullanmaya baslayin**
-Agent Panel'i acin ve sorun:
-> "test klasorundeki X-ray'leri analiz et"
+**6. Start using**
+Open the Agent Panel and ask:
+> "Analyze the X-rays in the test folder"
 
 ---
 
 ### Cursor
 
-**1.** [cursor.com](https://cursor.com) adresinden Cursor'u yukleyin
+**1.** Install from [cursor.com](https://cursor.com)
 
-**2.** Repo'yu klonlayin ve Cursor ile acin:
+**2.** Clone the repo and open in Cursor:
 ```bash
 git clone https://github.com/burakcanpolat/med-rehber.git
 ```
 
-**3.** Hazir! `.cursor/rules/medgemma.mdc` otomatik yuklenir (`alwaysApply: true`).
+**3.** Ready! `.cursor/rules/medgemma.mdc` is loaded automatically (`alwaysApply: true`).
 
-**Not:** Cursor'da OpenRouter modelleri sadece Chat modunda calisir. Agent mode icin Cursor Pro abonelik gerekir.
+**Note:** OpenRouter models in Cursor only work in Chat mode. Agent mode requires Cursor Pro subscription.
 
 ---
 
@@ -130,116 +163,111 @@ cd med-rehber
 claude
 ```
 
-Hazir! `CLAUDE.md` otomatik okunur.
+Ready! `CLAUDE.md` is read automatically.
 
 ---
 
-## Kullanim
+## Usage
 
-### AI Asistan ile (Onerilen)
+### With AI Assistant (Recommended)
 
-Editorde AI asistana sorun:
+Ask the AI assistant in your editor:
 
-> "test klasorundeki X-ray'leri analiz et"
+> "Analyze the X-rays in the test folder"
 
-> "WBC: 12.500, Hb: 9.2, Ferritin: 8 — yorumla"
+> "WBC: 12,500, Hb: 9.2, Ferritin: 8 — interpret"
 
-> "Aspirin ve Warfarin birlikte kullanilir mi?"
+> "Can Aspirin and Warfarin be taken together?"
 
-### Terminal ile
+### From Terminal
 
 ```bash
-python scripts/medgemma_api.py images/xray.jpeg              # Tek goruntu
-python scripts/medgemma_api.py img1.jpg img2.jpg img3.jpg     # Coklu goruntu
-python scripts/medgemma_api.py arsiv.zip                      # ZIP arsiv
+python3 scripts/medgemma_api.py images/xray.jpeg              # Single image
+python3 scripts/medgemma_api.py img1.jpg img2.jpg img3.jpg     # Multiple images
+python3 scripts/medgemma_api.py archive.zip                    # ZIP archive
 ```
 
 ### Pipeline
 
 ```
-Hasta bilgisi → Goruntu → scripts/medgemma_api.py → Modal (MedGemma)
-  ├── Seri ≤85 → tek istek
-  └── Seri >85 → 85'lik batch
+Patient info → Image → scripts/medgemma_api.py → Modal (MedGemma)
+  ├── Series ≤85 → single request
+  └── Series >85 → batches of 85
         ↓
-AI Asistan → Turkce rapor → reports/
+AI Assistant → Report in your language → reports/
 ```
 
-## Konfigurasyon
+## Configuration
 
-| Degisken | Aciklama | Varsayilan |
-|----------|----------|------------|
-| `MEDGEMMA_ENDPOINT` | MedGemma API URL | Modal hosted endpoint |
-| `MEDGEMMA_MODEL` | Model adi | `google/medgemma-1.5-4b-it` |
-| `OPENROUTER_API_KEY` | OpenRouter API key (Zed icin) | — |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MEDGEMMA_ENDPOINT` | Your MedGemma API URL (created during setup) | — (required) |
+| `MEDGEMMA_MODEL` | Model name | `google/medgemma-1.5-4b-it` |
+| `OPENROUTER_API_KEY` | OpenRouter API key (for Zed / Cursor) | — |
 
-Ornekler icin `.env.example` dosyasina bakin.
+These are set up automatically by the setup wizard. See `.env.example` for format.
 
-## Editor Uyumluluk Matrisi
+## Editor Compatibility Matrix
 
-| Dosya | Claude Code | Zed | Cursor | GitHub Copilot |
-|-------|:-----------:|:---:|:------:|:--------------:|
-| `CLAUDE.md` | ✅ otomatik | ✅ otomatik | — | — |
-| `AGENTS.md` | — | ✅ otomatik | ✅ otomatik | ✅ |
-| `.cursor/rules/*.mdc` | — | — | ✅ otomatik | — |
+| File | Claude Code | Zed | Cursor | GitHub Copilot |
+|------|:-----------:|:---:|:------:|:--------------:|
+| `CLAUDE.md` | ✅ auto | ✅ auto | — | — |
+| `AGENTS.md` | — | ✅ auto | ✅ auto | ✅ |
+| `.cursor/rules/*.mdc` | — | — | ✅ auto | — |
 | `.agents/skills/` | ✅ | ✅ | ✅ | — |
 
 ## Skills
 
-| Skill | Ne Yapar |
-|-------|----------|
-| `medgemma-radiology` | X-ray, CT, MRI goruntu analizi, guven seviyeleri |
-| `medgemma-assistant` | Lab sonuclari, ilac etkilesimleri, semptom degerlendirmesi |
+| Skill | What It Does |
+|-------|-------------|
+| `medgemma-radiology` | X-ray, CT, MRI image analysis, confidence levels |
+| `medgemma-assistant` | Lab results, drug interactions, symptom evaluation |
+| `medgemma-setup` | Setup wizard for first-time users |
 
-## Gereksinimler
+## Language Support
 
-- Python 3.8+ (sadece stdlib — ek paket gerekmez)
-- Internet baglantisi
+Med-Rehber supports **English** and **Turkish**. On first use, the AI will ask you to choose your language. All reports and communication will be in your chosen language. You can change your language preference by editing `reports/user_config.md`.
 
-## Lisans
+## Requirements
+
+- Python 3.10+
+- Internet connection
+- Modal CLI (installed during setup: `uv tool install modal`)
+
+## License
 
 MIT — [LICENSE](LICENSE)
 
 ---
 
-<a name="english-setup"></a>
+<a name="turkce-kurulum"></a>
 
-## English Setup
+## Türkçe Kurulum
 
-**Med-Rehber** is an open-source AI skill package for medical image analysis and clinical assistance. It works with **Zed**, **Cursor**, and **Claude Code**.
+**Med-Rehber** tıbbi görüntü analizi ve klinik yardım için açık kaynak AI skill paketidir. **Zed**, **Cursor** ve **Claude Code** ile çalışır.
 
-### Quick Start (Zed + OpenRouter)
+### Hızlı Başlangıç (Zed + OpenRouter)
 
-1. Install [Zed](https://zed.dev/download)
-2. Get an API key from [OpenRouter](https://openrouter.ai/keys)
-3. In Zed: Command Palette → `agent: open settings` → paste API key in OpenRouter section
-4. Clone and open:
+1. [Zed](https://zed.dev/download) kurun
+2. [OpenRouter](https://openrouter.ai/keys) adresinden API key alın
+3. Zed'de: Command Palette → `agent: open settings` → OpenRouter bölümüne API key yapıştırın
+4. Klonlayın ve açın:
    ```bash
    git clone https://github.com/burakcanpolat/med-rehber.git
    ```
-5. Open the Agent Panel and ask: *"Analyze the X-rays in the test folder"*
+5. Agent Panel'i açın ve sorun: *"Test klasöründeki X-ray'leri analiz et"*
 
-### Quick Start (Claude Code)
+### Hızlı Başlangıç (Claude Code)
 
 ```bash
 git clone https://github.com/burakcanpolat/med-rehber.git
 cd med-rehber && claude
 ```
 
-### What It Does
+### Dil Desteği
 
-- Collects patient information before analysis (age, gender, complaint)
-- Analyzes medical images via Google's MedGemma model
-- Explains findings in plain, simple language
-- Saves structured reports to `reports/`
-
-### Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MEDGEMMA_ENDPOINT` | MedGemma API URL | Modal hosted endpoint |
-| `MEDGEMMA_MODEL` | Model name | `google/medgemma-1.5-4b-it` |
-| `OPENROUTER_API_KEY` | OpenRouter API key (for Zed) | — |
+Med-Rehber **İngilizce** ve **Türkçe** destekler. İlk kullanımda AI size dil tercihinizi soracak. Tüm raporlar ve iletişim seçtiğiniz dilde olacak. Dil tercihinizi değiştirmek için `reports/user_config.md` dosyasını düzenleyin.
 
 ---
 
-⚠️ **Disclaimer / Sorumluluk Reddi:** These tools are for educational and informational purposes only. Always consult a healthcare professional for diagnosis and treatment. / Bu araclar egitim ve bilgilendirme amaclidir. Kesin tani ve tedavi icin doktora basvurun.
+⚠️ **Disclaimer / Sorumluluk Reddi:** These tools are for educational and informational purposes only. Always consult a healthcare professional for diagnosis and treatment. / Bu araçlar eğitim ve bilgilendirme amaçlıdır. Kesin tanı ve tedavi için doktora başvurun.

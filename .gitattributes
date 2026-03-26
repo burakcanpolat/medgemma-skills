@@ -1,0 +1,29 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Force LF for shell scripts (critical for macOS/Linux)
+*.sh text eol=lf
+
+# Force LF for Python files
+*.py text eol=lf
+
+# Force LF for Markdown files
+*.md text eol=lf
+
+# Cursor rule files
+*.mdc text eol=lf
+
+# Force CRLF for Windows batch files
+*.bat text eol=crlf
+
+# Binary files — do not modify
+*.zip binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.bmp binary
+*.tiff binary
+*.tif binary
+
+# DICOM medical imaging files
+*.dcm binary

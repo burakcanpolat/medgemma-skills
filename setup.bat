@@ -1,17 +1,17 @@
 @echo off
 chcp 65001 >nul 2>&1
-setlocal enabledelayedexpansion
+setlocal
 
 echo.
 echo ================================================
-echo   Med-Rehber — Kurulum Sihirbazi
+echo   Med-Rehber — Quick Setup
 echo ================================================
 echo.
 
 :: -------------------------------------------------------------------
-:: ADIM 1: Python Kontrolu
+:: STEP 1: Python Check
 :: -------------------------------------------------------------------
-echo --- Adim 1/4: Python Kontrolu ---
+echo --- Step 1/3: Python Check ---
 echo.
 
 set "PYTHON_CMD="
@@ -28,114 +28,97 @@ if %errorlevel%==0 (
     goto :python_found
 )
 
-echo [X] Python bulunamadi!
+echo [X] Python not found!
 echo.
-echo Python 3.8+ kurmaniz gerekiyor:
+echo Install Python 3.10+ from: https://www.python.org/downloads/
 echo.
-echo   1. Su adresi tarayicinizda acin:
-echo      https://www.python.org/downloads/
+echo   1. Click the big yellow "Download Python" button
+echo   2. Run the downloaded file
+echo   3. IMPORTANT: Check "Add Python to PATH" at the bottom!
+echo   4. Click "Install Now"
 echo.
-echo   2. Buyuk sari "Download Python" butonuna tiklayin
-echo.
-echo   3. Indirilen dosyayi calistirin
-echo.
-echo   4. ONEMLI: "Add Python to PATH" kutucugunu MUTLAKA isaretleyin!
-echo.
-echo   5. "Install Now" tiklayin
-echo.
-echo Python kurduktan sonra bu scripti tekrar calistirin.
+echo After installing, run this script again.
 pause
 exit /b 1
 
 :python_found
 for /f "tokens=2" %%v in ('%PYTHON_CMD% --version 2^>^&1') do set "PY_VER=%%v"
-echo [OK] Python %PY_VER% kurulu.
-
-:: -------------------------------------------------------------------
-:: ADIM 2: .env Dosyasi
-:: -------------------------------------------------------------------
-echo.
-echo --- Adim 2/4: Ayar Dosyasi (.env) ---
-echo.
-
-if exist .env (
-    findstr /c:"MEDGEMMA_ENDPOINT" .env >nul 2>&1
-    if %errorlevel%==0 (
-        echo [OK] .env dosyasi zaten mevcut ve yapilandirilmis.
-        goto :test_connection
-    ) else (
-        echo [!] .env dosyasi var ama MEDGEMMA_ENDPOINT ayari yok.
-    )
+for /f "tokens=1,2 delims=." %%a in ("%PY_VER%") do (
+    set "PY_MAJOR=%%a"
+    set "PY_MINOR=%%b"
 )
+if %PY_MAJOR% LSS 3 goto :python_too_old
+if %PY_MAJOR% EQU 3 if %PY_MINOR% LSS 10 goto :python_too_old
+echo [OK] Python %PY_VER% is installed.
+goto :modal_check
 
-echo Yapilandirma dosyasi olusturulacak.
+:python_too_old
+echo [X] Python %PY_VER% found but 3.10+ is required!
 echo.
-echo Kendi MedGemma endpoint'iniz var mi? (e/h)
-echo (Emin degilseniz 'h' yapin — varsayilan endpoint kullanilir)
-set /p "HAS_ENDPOINT=Seciminiz: "
+echo Install Python 3.10+ from: https://www.python.org/downloads/
+pause
+exit /b 1
 
-if /i "!HAS_ENDPOINT!"=="e" (
-    echo.
-    echo Endpoint URL'nizi girin:
-    set /p "USER_ENDPOINT=URL: "
-    (
-        echo # Med-Rehber Ayarlari
-        echo MEDGEMMA_ENDPOINT=!USER_ENDPOINT!
-        echo MEDGEMMA_MODEL=google/medgemma-1.5-4b-it
-    ) > .env
-) else (
-    (
-        echo # Med-Rehber Ayarlari
-        echo MEDGEMMA_ENDPOINT=https://burakcanpolat--medgemma-vllm-serve.modal.run/v1/chat/completions
-        echo MEDGEMMA_MODEL=google/medgemma-1.5-4b-it
-    ) > .env
-)
-
-echo [OK] .env dosyasi olusturuldu.
+:modal_check
 
 :: -------------------------------------------------------------------
-:: ADIM 3: Baglanti Testi
+:: STEP 2: Modal CLI Check
 :: -------------------------------------------------------------------
-:test_connection
 echo.
-echo --- Adim 3/4: Baglanti Testi ---
-echo.
-echo MedGemma sunucusuna baglaniliyor... (10-30 saniye surebilir)
+echo --- Step 2/3: Modal CLI ---
 echo.
 
-%PYTHON_CMD% scripts\medgemma_api.py test\sample-xrays\normal\normal-xray-1.jpeg >nul 2>&1
+modal --version >nul 2>&1
 if %errorlevel%==0 (
-    echo [OK] Baglanti calisiyor! MedGemma yanit verdi.
+    echo [OK] Modal CLI is installed.
+    goto :next_steps
+)
+
+echo Installing Modal CLI...
+%PYTHON_CMD% -m pip install modal >nul 2>&1
+if %errorlevel%==0 (
+    echo [OK] Modal CLI installed.
 ) else (
-    echo [!] Baglanti sirasinda bir sorun olustu.
-    echo.
-    echo   Muhtemel nedenler:
-    echo   - Internet baglantinizi kontrol edin
-    echo   - Sunucu uyku modunda olabilir, 30 saniye bekleyip tekrar deneyin
-    echo   - .env dosyasindaki endpoint URL'sini kontrol edin
+    echo [!] Could not install Modal CLI.
+    echo     Try manually: pip install modal
+    pause
+    exit /b 1
 )
 
 :: -------------------------------------------------------------------
-:: ADIM 4: Tamamlandi
+:: STEP 3: Next Steps
 :: -------------------------------------------------------------------
+:next_steps
 echo.
-echo --- Adim 4/4: Tamamlandi ---
+echo --- Step 3/3: Next Steps ---
 echo.
 echo ================================================
-echo [OK] Med-Rehber kuruluma hazir!
+echo [OK] Prerequisites are ready!
 echo ================================================
 echo.
-echo   Simdi ne yapabilirsiniz:
+echo   Now open this folder in an AI editor for guided setup:
 echo.
-echo   1. Bir AI editorde acin (Zed, Cursor, Claude Code)
-echo      ve AI asistanla sohbet edin.
+echo   Option A — Zed (recommended):
+echo     1. Download from https://zed.dev/download
+echo     2. Get an API key from https://openrouter.ai/keys
+echo     3. Open this folder in Zed
+echo     4. Open Agent Panel and type: "start setup"
 echo.
-echo   2. Terminal'den kullanin:
-echo      %PYTHON_CMD% scripts\medgemma_api.py goruntu.jpg
+echo   Option B — Cursor:
+echo     1. Download from https://cursor.com
+echo     2. Open this folder in Cursor
+echo     3. Open Chat and type: "start setup"
 echo.
-echo   3. Test goruntuleriyle deneyin:
-echo      %PYTHON_CMD% scripts\medgemma_api.py test\sample-xrays\normal\normal-xray-1.jpeg
+echo   Option C — Claude Code:
+echo     1. Install Node.js from https://nodejs.org
+echo     2. Run: npm install -g @anthropic-ai/claude-code
+echo     3. Run: cd "%CD%" ^&^& claude
+echo     4. Type: "start setup"
 echo.
-echo   Detayli bilgi: README.md
+echo   The AI assistant will guide you through:
+echo     * Modal account creation (free, $30/month credit)
+echo     * HuggingFace token setup
+echo     * MedGemma deployment
+echo     * First analysis
 echo.
 pause
