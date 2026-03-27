@@ -418,13 +418,16 @@ Go to STEP 8.
 
 ```
 🔌 Let's test the connection to your MedGemma server...
-   (The first request can take 2-5 minutes — the server needs to load the AI model into GPU memory)
+   The script will automatically detect if the server is starting up (cold start)
+   and show you the progress. This may take 2-5 minutes on the first run.
 ```
 
 Run in terminal:
 ```bash
 python3 scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1 || python scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1
 ```
+
+The script will show `[SERVER] Waiting...` messages if the server is cold-starting. This is normal — just wait for it to finish.
 
 ### If test SUCCEEDS (analysis text returned):
 
@@ -438,15 +441,12 @@ Go to STEP 9.
 
 ### If test FAILS:
 
-**Timeout:**
+**"Server did not respond within 10 minutes":**
 ```
-The server is still waking up (this is normal for the first request).
-Let me try once more...
+The server could not start. Let's check the deployment status.
 ```
-Wait 10 seconds and retry the same command. If it fails again:
-```
-The server might need another minute. Let's wait and try one more time.
-```
+Run: `modal app list` — verify `medgemma-vllm` appears and is deployed.
+If not, go back to STEP 6 and redeploy.
 
 **"MEDGEMMA_ENDPOINT is not set":**
 The .env file wasn't loaded. Check:

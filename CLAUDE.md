@@ -60,16 +60,22 @@ If emergency signs are present → stop intake, recommend calling emergency serv
 For image analysis, use `scripts/medgemma_api.py`:
 
 ```bash
-# Single image or few images (base64 mode — default)
+# Single image (always base64 — efficient for one file)
 python3 scripts/medgemma_api.py images/xray.jpeg
+
+# Multiple images (auto volume, base64 fallback)
 python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg
 
-# ZIP or large studies (volume mode — uploads to Modal Volume first)
-python3 scripts/medgemma_api.py --volume archive.zip
-python3 scripts/medgemma_api.py --volume img1.jpg img2.jpg img3.jpg
+# ZIP archive (auto volume, base64 fallback)
+python3 scripts/medgemma_api.py archive.zip
+
+# Force base64 mode (skip volume upload)
+python3 scripts/medgemma_api.py --base64 archive.zip
 ```
 
-**When to use --volume:** For ZIP files or more than ~5 images. Volume mode uploads images to Modal Volume and uses file:// paths instead of base64, dramatically reducing payload size (41MB → 25KB for 309 images).
+**Volume-first strategy:** For ZIP files and multiple images, the script automatically uploads to Modal Volume and uses file:// paths (41MB → 25KB for 309 images). If Modal CLI is not installed or upload fails, it falls back to base64 silently.
+
+**Cold start handling:** On first request, the script checks if the server is ready. If the Modal container is cold-starting (loading the AI model into GPU), progress feedback is shown until the server responds (typically 2-5 minutes).
 
 Each series is independent: ≤85 images → single request, >85 → batched in groups of 85.
 MedGemma outputs in English → translate findings into the user's chosen language in plain, simple terms.
@@ -85,7 +91,7 @@ modal deploy scripts/modal_medgemma.py
 This creates:
 - `medgemma-vllm` app with vLLM + MedGemma model
 - `medgemma-hf-cache` volume for model weights (avoids re-download)
-- `med-images` volume for image uploads (used with --volume flag)
+- `med-images` volume for image uploads (used automatically by volume-first strategy)
 
 ## Report Saving
 

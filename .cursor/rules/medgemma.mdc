@@ -55,16 +55,15 @@ If emergency signs are present → stop intake, recommend calling emergency serv
 For image analysis, use `scripts/medgemma_api.py`:
 
 ```bash
-python3 scripts/medgemma_api.py images/xray.jpeg
-python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg
-
-# ZIP or large studies (volume mode — uploads to Modal Volume first)
-python3 scripts/medgemma_api.py --volume archive.zip
-python3 scripts/medgemma_api.py --volume img1.jpg img2.jpg img3.jpg
+python3 scripts/medgemma_api.py images/xray.jpeg              # single, base64
+python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg    # multiple, auto volume
+python3 scripts/medgemma_api.py archive.zip                    # ZIP, auto volume
+python3 scripts/medgemma_api.py --base64 archive.zip           # ZIP, force base64
 ```
 
+**Volume-first:** ZIP and multiple images auto-upload to Modal Volume. Falls back to base64 if Modal CLI is unavailable.
+**Cold start:** The script detects cold starts and shows progress until the server is ready (2-5 min).
 Each series is independent: ≤85 → single request, >85 → batched in groups of 85.
-**When to use --volume:** For ZIP files or more than ~5 images.
 MedGemma outputs in English → translate to user's language in plain, simple terms.
 
 ## Modal Deployment

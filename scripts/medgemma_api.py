@@ -3,19 +3,24 @@ MedGemma API Client — Unified
 Sends images to MedGemma model deployed on Modal.
 Includes ZIP smart-routing, series detection, batch processing, and JSON report saving.
 
-Supports two image modes:
-  - base64 (default): Encodes images inline in JSON — works everywhere, no extra deps.
-  - volume: Uses Modal Volume + file:// paths — much faster for large studies.
-    Requires: modal CLI installed and med-images volume created.
+Image transfer strategy (volume-first):
+  - volume (automatic): Uploads to Modal Volume, sends file:// paths. Used automatically
+    for ZIP files and multiple images when Modal CLI is available.
+  - base64 (fallback): Encodes images inline in JSON. Used for single images, or as
+    fallback when Modal CLI is not installed or volume upload fails.
+
+Cold start handling:
+  Before the first analysis, the script checks if the server is ready. If the Modal
+  container is cold-starting, progress feedback is shown until the server responds.
 
 Modal config: --limit-mm-per-prompt image=85 (max 85 images per request)
 
 Usage:
   python medgemma_api.py image.jpeg                          # single, base64
-  python medgemma_api.py image1.jpg image2.jpg               # multiple, base64
-  python medgemma_api.py archive.zip                         # ZIP, base64
-  python medgemma_api.py --volume archive.zip                # ZIP, volume upload
-  python medgemma_api.py --volume image1.jpg image2.jpg      # multiple, volume upload
+  python medgemma_api.py image1.jpg image2.jpg               # multiple, auto volume
+  python medgemma_api.py archive.zip                         # ZIP, auto volume
+  python medgemma_api.py --base64 archive.zip                # ZIP, force base64
+  python medgemma_api.py --base64 img1.jpg img2.jpg          # multiple, force base64
 """
 
 import base64
@@ -24,6 +29,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import zipfile
 import urllib.request
 import urllib.error
@@ -78,6 +84,65 @@ def _ssl_ctx() -> ssl.SSLContext:
         ctx.verify_mode = ssl.CERT_NONE
         return ctx
     return ssl.create_default_context()
+
+
+# ---------------------------------------------------------------------------
+# Cold start detection and server readiness
+# ---------------------------------------------------------------------------
+
+_server_warm = False
+
+
+def _ping_server(timeout: int = 15) -> bool:
+    """Send a lightweight GET to /v1/models to check if the server is responding."""
+    if not ENDPOINT:
+        return False
+    # Derive /v1/models URL from the chat completions endpoint
+    if "/v1/" in ENDPOINT:
+        url = ENDPOINT.split("/v1/")[0] + "/v1/models"
+    else:
+        url = ENDPOINT
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx()) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
+def _ensure_server_ready() -> bool:
+    """Wait for the MedGemma server to be ready. Handles cold starts with progress feedback."""
+    global _server_warm
+    if _server_warm:
+        return True
+
+    print("[SERVER] Checking MedGemma server status...")
+    if _ping_server(timeout=15):
+        print("[SERVER] Server is ready.")
+        _server_warm = True
+        return True
+
+    # Cold start detected
+    print("[SERVER] Server is starting up (cold start)...")
+    print("[SERVER] The AI model is loading into GPU memory. This typically takes 2-5 minutes.")
+
+    max_wait = 600  # 10 minutes
+    start = time.time()
+    while time.time() - start < max_wait:
+        time.sleep(15)
+        elapsed = int(time.time() - start)
+        mins, secs = divmod(elapsed, 60)
+        print(f"[SERVER] Waiting... {mins}m {secs:02d}s elapsed")
+        if _ping_server(timeout=15):
+            elapsed = int(time.time() - start)
+            mins, secs = divmod(elapsed, 60)
+            print(f"[SERVER] Server is ready! (cold start took {mins}m {secs:02d}s)")
+            _server_warm = True
+            return True
+
+    print("[SERVER] Server did not respond within 10 minutes.")
+    print("[SERVER] Check your deployment: modal app list")
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -386,10 +451,12 @@ def save_report(data: dict, label: str = "report") -> Path:
 # Smart ZIP dispatcher
 # ---------------------------------------------------------------------------
 
-def process_zip(zip_path: str | Path, use_volume: bool = False) -> dict:
+def process_zip(zip_path: str | Path, force_base64: bool = False) -> dict:
     """
     Extract ZIP, split into series, analyze each series independently.
-    If use_volume=True, uploads images to Modal Volume first for faster transfer.
+    Automatically uses volume mode when Modal CLI is available (volume-first).
+    Falls back to base64 if Modal is not installed or volume upload fails.
+    Pass force_base64=True to skip volume and use base64 directly.
     """
     images, extraction_root = extract_zip(zip_path)
     total = len(images)
@@ -401,15 +468,19 @@ def process_zip(zip_path: str | Path, use_volume: bool = False) -> dict:
     zip_label = Path(zip_path).stem
     session_id = f"{zip_label}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # Volume upload if requested
+    # Volume-first: try volume automatically unless forced to base64
     volume_remote_dir = None
-    if use_volume:
-        if not _modal_available():
-            print("WARNING: modal CLI not found. Falling back to base64 mode.")
+    if force_base64:
+        print("[MODE] Base64 mode (forced via --base64).")
+    elif _modal_available():
+        remote_dir = f"sessions/{session_id}"
+        print("[MODE] Attempting volume upload for optimal performance...")
+        if volume_upload(extraction_root, remote_dir):
+            volume_remote_dir = remote_dir
         else:
-            remote_dir = f"sessions/{session_id}"
-            if volume_upload(extraction_root, remote_dir):
-                volume_remote_dir = remote_dir
+            print("[MODE] Volume upload failed. Falling back to base64.")
+    else:
+        print("[MODE] Modal CLI not found. Using base64 mode.")
 
     # Detect series
     series_map = detect_series(images, extraction_root)
@@ -460,20 +531,23 @@ if __name__ == "__main__":
         print("See .env.example for details.")
         sys.exit(1)
 
-    # Parse --volume flag
+    # Parse flags
     args = sys.argv[1:]
-    use_volume = False
+    force_base64 = False
+    if "--base64" in args:
+        force_base64 = True
+        args.remove("--base64")
+    # --volume is kept for backward compatibility (now the default, silently ignored)
     if "--volume" in args:
-        use_volume = True
         args.remove("--volume")
 
     if len(args) < 1:
         print("Usage:")
-        print("  python medgemma_api.py image.jpeg")
-        print("  python medgemma_api.py image1.jpg image2.jpg image3.jpg")
-        print("  python medgemma_api.py archive.zip")
-        print("  python medgemma_api.py --volume archive.zip        # use Modal Volume")
-        print("  python medgemma_api.py --volume img1.jpg img2.jpg  # use Modal Volume")
+        print("  python medgemma_api.py image.jpeg                    # single image")
+        print("  python medgemma_api.py image1.jpg image2.jpg         # multiple (auto volume)")
+        print("  python medgemma_api.py archive.zip                   # ZIP (auto volume)")
+        print("  python medgemma_api.py --base64 archive.zip          # ZIP, force base64")
+        print("  python medgemma_api.py --base64 img1.jpg img2.jpg    # multiple, force base64")
         sys.exit(1)
 
     # Validate file extensions
@@ -485,26 +559,29 @@ if __name__ == "__main__":
                 print(f"Supported: {', '.join(sorted(IMAGE_EXTENSIONS))}")
                 sys.exit(1)
 
+    # Ensure server is ready (handles cold start with progress feedback)
+    if not _ensure_server_ready():
+        print("ERROR: MedGemma server is not available. Cannot proceed.")
+        sys.exit(1)
+
     input_path = args[0]
 
     if input_path.lower().endswith(".zip"):
-        process_zip(input_path, use_volume=use_volume)
+        process_zip(input_path, force_base64=force_base64)
     else:
         paths = args
         if len(paths) == 1:
-            if use_volume:
-                print("NOTE: --volume is not used for single images (base64 is efficient enough).")
+            # Single image: always base64 (efficient enough)
             print(f"[SINGLE IMAGE] {paths[0]}")
             result = analyze_image(paths[0])
             print(result)
             save_report({"mode": "single", "image": paths[0], "analysis": result},
                         label=Path(paths[0]).stem)
         else:
-            if use_volume and _modal_available():
-                # Upload all images to volume, then analyze with file:// paths
+            # Multiple images: volume-first with base64 fallback
+            if not force_base64 and _modal_available():
                 session_id = f"multi_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 remote_dir = f"sessions/{session_id}"
-                # Create temp dir with all images
                 tmp = Path("images") / "temp" / session_id
                 tmp.mkdir(parents=True, exist_ok=True)
                 seen_names: set[str] = set()
@@ -518,6 +595,7 @@ if __name__ == "__main__":
                     seen_names.add(name)
                     final_names.append(name)
                     shutil.copy2(p, tmp / name)
+                print(f"[MODE] Attempting volume upload for optimal performance...")
                 if volume_upload(tmp, remote_dir):
                     vol_paths = [f"{VOLUME_MOUNT}/{remote_dir}/{n}" for n in final_names]
                     print(f"[MULTIPLE IMAGES] {len(paths)} files (volume mode)")
@@ -526,15 +604,19 @@ if __name__ == "__main__":
                     save_report({"mode": "multiple_volume", "images": paths, "analysis": result},
                                 label="multi_image")
                     volume_cleanup(remote_dir)
-                    shutil.rmtree(tmp, ignore_errors=True)
                 else:
-                    print("WARNING: Volume upload failed. Falling back to base64.")
-                    print(f"[MULTIPLE IMAGES] {len(paths)} files (base64)")
+                    print("[MODE] Volume upload failed. Falling back to base64.")
+                    print(f"[MULTIPLE IMAGES] {len(paths)} files (base64 fallback)")
                     result = analyze_multiple(paths)
                     print(result)
                     save_report({"mode": "multiple", "images": paths, "analysis": result},
                                 label="multi_image")
+                shutil.rmtree(tmp, ignore_errors=True)
             else:
+                if force_base64:
+                    print(f"[MODE] Base64 mode (forced via --base64).")
+                else:
+                    print(f"[MODE] Modal CLI not found. Using base64 mode.")
                 print(f"[MULTIPLE IMAGES] {len(paths)} files")
                 result = analyze_multiple(paths)
                 print(result)

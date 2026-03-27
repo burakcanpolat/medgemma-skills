@@ -53,14 +53,14 @@ Use the section headers matching the user's chosen language:
 
 For image analysis, use `scripts/medgemma_api.py`:
 ```bash
-python3 scripts/medgemma_api.py images/xray.jpeg                # Single image
-python3 scripts/medgemma_api.py img1.jpg img2.jpg img3.jpg       # Multiple
-python3 scripts/medgemma_api.py archive.zip                      # ZIP archive
-python3 scripts/medgemma_api.py --volume archive.zip             # ZIP, volume upload
-python3 scripts/medgemma_api.py --volume img1.jpg img2.jpg       # Multiple, volume upload
+python3 scripts/medgemma_api.py images/xray.jpeg              # Single image (base64)
+python3 scripts/medgemma_api.py img1.jpg img2.jpg img3.jpg     # Multiple (auto volume)
+python3 scripts/medgemma_api.py archive.zip                    # ZIP (auto volume)
+python3 scripts/medgemma_api.py --base64 archive.zip           # ZIP, force base64
 ```
 
-**When to use --volume:** For ZIP files or more than ~5 images. Volume mode uploads to Modal Volume and uses file:// paths instead of base64.
+**Volume-first:** ZIP and multiple images auto-upload to Modal Volume (file:// paths). Falls back to base64 if Modal CLI is unavailable.
+**Cold start:** The script detects cold starts and shows progress until the server is ready.
 
 ## Rules
 
