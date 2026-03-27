@@ -204,6 +204,7 @@ AI Assistant → Report in your language → reports/
 | `MEDGEMMA_ENDPOINT` | Your MedGemma API URL (created during setup) | — (required) |
 | `MEDGEMMA_MODEL` | Model name | `google/medgemma-1.5-4b-it` |
 | `OPENROUTER_API_KEY` | OpenRouter API key (for Zed / Cursor) | — |
+| `MEDGEMMA_VERIFY_SSL` | Set to `false` for corporate proxies | `true` |
 
 These are set up automatically by the setup wizard. See `.env.example` for format.
 

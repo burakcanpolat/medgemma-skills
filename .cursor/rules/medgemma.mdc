@@ -75,6 +75,11 @@ The MedGemma server runs on Modal. Deploy script: `scripts/modal_medgemma.py`.
 modal deploy scripts/modal_medgemma.py
 ```
 
+This creates:
+- `medgemma-vllm` app with vLLM + MedGemma model
+- `medgemma-hf-cache` volume for model weights
+- `med-images` volume for image uploads
+
 ## Report Saving
 
 Save reports as `reports/YYYY-MM-DD_short-description_report.md`.

@@ -73,12 +73,16 @@ def serve():
         "--limit-mm-per-prompt", "image=85",
         "--allowed-local-media-path", "/data/images",
     ]
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # Wait briefly and verify the process is still alive
-    time.sleep(5)
+    # Log to file to avoid pipe buffer deadlock (vLLM is very verbose)
+    log_file = open("/tmp/vllm.log", "w")
+    process = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
+    # Wait and verify the process is still alive
+    time.sleep(10)
     if process.poll() is not None:
-        output = process.stdout.read().decode() if process.stdout else ""
-        raise RuntimeError(f"vLLM failed to start (exit code {process.returncode}):\n{output[:2000]}")
+        log_file.close()
+        with open("/tmp/vllm.log", "r") as f:
+            output = f.read()
+        raise RuntimeError(f"vLLM failed to start (exit code {process.returncode}):\n{output[:3000]}")
 
 
 if __name__ == "__main__":

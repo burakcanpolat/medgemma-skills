@@ -59,6 +59,7 @@ Use the section headers matching the user's chosen language:
 - Analyze each image separately, then add a **COMPARISON** section
 - For time series, describe the change simply: "the inflammation in the lung has spread over 3 days"
 - Subdirectories in a ZIP = separate series → separate analysis per series, then overall comparison
+- For large series (>85 images), the script batches them in groups of 85 and analyzes each batch separately
 
 ## MedGemma Pipeline
 

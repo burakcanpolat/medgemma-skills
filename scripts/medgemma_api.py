@@ -55,6 +55,11 @@ _load_env()
 ENDPOINT = os.environ.get("MEDGEMMA_ENDPOINT", "")
 MODEL = os.environ.get("MEDGEMMA_MODEL", "google/medgemma-1.5-4b-it")
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
+_MIME_MAP = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".png": "image/png", ".bmp": "image/bmp",
+    ".tiff": "image/tiff", ".tif": "image/tiff",
+}
 
 MAX_IMAGES_PER_REQUEST = 85  # Modal vLLM config: --limit-mm-per-prompt image=85
 VOLUME_NAME = "med-images"
@@ -145,11 +150,6 @@ def _api_call(content: list[dict], max_tokens: int = 1024, timeout: int = 300) -
 
 def _image_content_base64(image_path: Path) -> dict:
     """Build an image_url content block using base64 encoding."""
-    _MIME_MAP = {
-        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-        ".png": "image/png", ".bmp": "image/bmp",
-        ".tiff": "image/tiff", ".tif": "image/tiff",
-    }
     mime = _MIME_MAP.get(image_path.suffix.lower(), "image/png")
     b64 = base64.b64encode(image_path.read_bytes()).decode()
     return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
@@ -185,6 +185,10 @@ def analyze_multiple(image_paths: list[str | Path],
                      volume_paths: list[str] | None = None) -> str:
     """Send multiple images to MedGemma in a single request (max 85)."""
     content: list[dict] = [{"type": "text", "text": prompt}]
+
+    total = len(image_paths)
+    if total > MAX_IMAGES_PER_REQUEST:
+        return f"ERROR: Too many images ({total}). Maximum is {MAX_IMAGES_PER_REQUEST} per request. Use analyze_series() for batching."
 
     if volume_paths:
         for vp in volume_paths:
@@ -227,7 +231,7 @@ def extract_zip(zip_path: str | Path) -> tuple[list[Path], Path]:
                 break
             # ZIP slip protection: validate and write manually
             target = (out / name).resolve()
-            if not str(target).startswith(str(out_resolved)):
+            if not str(target).startswith(str(out_resolved) + os.sep):
                 print(f"WARNING: Skipping suspicious path: {name}")
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -486,6 +490,7 @@ if __name__ == "__main__":
                 tmp = Path("images") / "temp" / session_id
                 tmp.mkdir(parents=True, exist_ok=True)
                 seen_names: set[str] = set()
+                final_names: list[str] = []
                 for p in paths:
                     name = Path(p).name
                     if name in seen_names:
@@ -493,9 +498,10 @@ if __name__ == "__main__":
                         suffix = Path(p).suffix
                         name = f"{stem}_{hash(p) % 10000}{suffix}"
                     seen_names.add(name)
+                    final_names.append(name)
                     shutil.copy2(p, tmp / name)
                 if volume_upload(tmp, remote_dir):
-                    vol_paths = [f"{VOLUME_MOUNT}/{remote_dir}/{Path(p).name}" for p in paths]
+                    vol_paths = [f"{VOLUME_MOUNT}/{remote_dir}/{n}" for n in final_names]
                     print(f"[MULTIPLE IMAGES] {len(paths)} files (volume mode)")
                     result = analyze_multiple(paths, volume_paths=vol_paths)
                     print(result)
