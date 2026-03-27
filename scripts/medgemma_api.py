@@ -16,11 +16,12 @@ Cold start handling:
 Modal config: --limit-mm-per-prompt image=85 (max 85 images per request)
 
 Usage:
-  python medgemma_api.py image.jpeg                          # single, base64
-  python medgemma_api.py image1.jpg image2.jpg               # multiple, auto volume
-  python medgemma_api.py archive.zip                         # ZIP, auto volume
-  python medgemma_api.py --base64 archive.zip                # ZIP, force base64
-  python medgemma_api.py --base64 img1.jpg img2.jpg          # multiple, force base64
+  python3 scripts/medgemma_api.py image.jpeg                 # single, base64
+  python3 scripts/medgemma_api.py image1.jpg image2.jpg      # multiple, auto volume
+  python3 scripts/medgemma_api.py archive.zip                # ZIP, auto volume
+  python3 scripts/medgemma_api.py --base64 archive.zip       # ZIP, force base64
+
+Note: On Windows, use `python` instead of `python3` if `python3` is not available.
 """
 
 import base64
@@ -419,7 +420,7 @@ def analyze_series(series_name: str, images: list[Path],
                 "Describe the imaging modality, body region, and key findings in this segment."
             )
             answer = analyze_multiple(batch, prompt, volume_paths=_volume_paths(batch))
-            print(f"  -> Result: {answer[:160]}...")
+            print(f"  -> Result: {answer[:200]}...")
             series_result["batches"].append({
                 "batch": idx,
                 "image_count": len(batch),
@@ -458,6 +459,11 @@ def process_zip(zip_path: str | Path, force_base64: bool = False) -> dict:
     Falls back to base64 if Modal is not installed or volume upload fails.
     Pass force_base64=True to skip volume and use base64 directly.
     """
+    zip_path = Path(zip_path)
+    if not zip_path.exists():
+        print(f"ERROR: ZIP file not found: {zip_path}")
+        return {}
+
     images, extraction_root = extract_zip(zip_path)
     total = len(images)
 
