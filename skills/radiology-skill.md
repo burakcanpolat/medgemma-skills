@@ -72,7 +72,7 @@ python3 scripts/medgemma_api.py --volume img1.jpg img2.jpg       # Multiple, vol
 
 ## Report Saving
 
-Save the report as `reports/YYYY-MM-DD_descriptive-name_report.md`.
+Save the report as `reports/YYYY-MM-DD_short-description_report.md`.
 - Multi-analysis: `reports/YYYY-MM-DD_batch-analysis_report.md`
 - Create `reports/` directory if it does not exist
 

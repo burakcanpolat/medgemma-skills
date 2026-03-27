@@ -26,6 +26,7 @@ import subprocess
 import sys
 import zipfile
 import urllib.request
+import urllib.error
 import ssl
 import datetime
 from pathlib import Path
@@ -96,10 +97,14 @@ def volume_upload(local_dir: str | Path, remote_dir: str) -> bool:
         return False
 
     print(f"[VOLUME] Uploading {local_dir} -> {VOLUME_NAME}:{remote_dir}")
-    result = subprocess.run(
-        ["modal", "volume", "put", VOLUME_NAME, local_dir.as_posix() + "/", remote_dir],
-        capture_output=True, text=True, timeout=300,
-    )
+    try:
+        result = subprocess.run(
+            ["modal", "volume", "put", VOLUME_NAME, local_dir.as_posix() + "/", remote_dir],
+            capture_output=True, text=True, timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        print("ERROR: Volume upload timed out (>5 min).")
+        return False
     if result.returncode != 0:
         print(f"ERROR: Volume upload failed: {result.stderr}")
         return False
@@ -111,12 +116,15 @@ def volume_upload(local_dir: str | Path, remote_dir: str) -> bool:
 def volume_cleanup(remote_dir: str) -> None:
     """Remove uploaded images from the volume after analysis."""
     print(f"[VOLUME] Cleaning up {VOLUME_NAME}:{remote_dir}")
-    result = subprocess.run(
-        ["modal", "volume", "rm", "-r", VOLUME_NAME, remote_dir],
-        capture_output=True, text=True, timeout=60,
-    )
-    if result.returncode != 0:
-        print(f"WARNING: Volume cleanup failed: {result.stderr.strip()}")
+    try:
+        result = subprocess.run(
+            ["modal", "volume", "rm", "-r", VOLUME_NAME, remote_dir],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode != 0:
+            print(f"WARNING: Volume cleanup failed: {result.stderr.strip()}")
+    except subprocess.TimeoutExpired:
+        print("WARNING: Volume cleanup timed out.")
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +147,16 @@ def _api_call(content: list[dict], max_tokens: int = 1024, timeout: int = 300) -
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx()) as resp:
             result = json.loads(resp.read().decode())
-            return result["choices"][0]["message"]["content"]
+            choices = result.get("choices")
+            if not choices:
+                return f"ERROR: Unexpected API response (no choices): {json.dumps(result)[:500]}"
+            return choices[0]["message"]["content"]
+    except urllib.error.URLError as e:
+        return f"ERROR: MedGemma connection error: {e}"
+    except (KeyError, IndexError, json.JSONDecodeError) as e:
+        return f"ERROR: MedGemma malformed response: {e}"
+    except subprocess.TimeoutExpired:
+        return "ERROR: MedGemma request timed out."
     except Exception as e:
         return f"ERROR: MedGemma API error: {e}"
 
@@ -412,23 +429,22 @@ def process_zip(zip_path: str | Path, use_volume: bool = False) -> dict:
         "series": {},
     }
 
-    for series_name, series_images in series_map.items():
-        series_result = analyze_series(
-            series_name, series_images,
-            volume_remote_dir=volume_remote_dir,
-            extraction_root=extraction_root,
-        )
-        results["series"][series_name] = series_result
+    try:
+        for series_name, series_images in series_map.items():
+            series_result = analyze_series(
+                series_name, series_images,
+                volume_remote_dir=volume_remote_dir,
+                extraction_root=extraction_root,
+            )
+            results["series"][series_name] = series_result
 
-    save_report(results, label=zip_label)
-
-    # Clean up volume after analysis
-    if volume_remote_dir:
-        volume_cleanup(volume_remote_dir)
-
-    # Clean up local temp directory
-    if extraction_root.exists():
-        shutil.rmtree(extraction_root, ignore_errors=True)
+        save_report(results, label=zip_label)
+    finally:
+        # Always clean up, even if analysis fails
+        if volume_remote_dir:
+            volume_cleanup(volume_remote_dir)
+        if extraction_root.exists():
+            shutil.rmtree(extraction_root, ignore_errors=True)
 
     return results
 
@@ -476,6 +492,8 @@ if __name__ == "__main__":
     else:
         paths = args
         if len(paths) == 1:
+            if use_volume:
+                print("NOTE: --volume is not used for single images (base64 is efficient enough).")
             print(f"[SINGLE IMAGE] {paths[0]}")
             result = analyze_image(paths[0])
             print(result)

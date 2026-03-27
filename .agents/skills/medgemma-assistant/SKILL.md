@@ -60,7 +60,7 @@ When medical report text is provided:
 
 ## Report Saving
 
-Save the report as `reports/YYYY-MM-DD_descriptive-name_report.md`.
+Save the report as `reports/YYYY-MM-DD_short-description_report.md`.
 
 ## Disclaimer
 
