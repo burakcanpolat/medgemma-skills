@@ -8,9 +8,11 @@
 
 Powered by [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it) | Works with **Zed**, **Cursor**, and **Claude Code**
 
+[![CI](https://github.com/burakcanpolat/med-guide/actions/workflows/ci.yml/badge.svg)](https://github.com/burakcanpolat/med-guide/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://python.org)
 [![uv](https://img.shields.io/badge/uv-package%20manager-blueviolet.svg)](https://docs.astral.sh/uv/)
+[![GitHub Stars](https://img.shields.io/github/stars/burakcanpolat/med-guide?style=social)](https://github.com/burakcanpolat/med-guide/stargazers)
 
 ---
 

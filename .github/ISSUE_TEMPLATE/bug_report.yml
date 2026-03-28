@@ -1,0 +1,68 @@
+name: Bug Report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: editor
+    attributes:
+      label: AI Editor
+      description: Which editor are you using?
+      options:
+        - Claude Code
+        - Zed
+        - Cursor
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: analysis_type
+    attributes:
+      label: Analysis Type
+      description: What were you trying to do?
+      options:
+        - Radiology (X-ray, CT, MRI)
+        - DICOM processing
+        - Lab results
+        - Drug interactions
+        - Setup / Installation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly
+      placeholder: "When I tried to analyze a DICOM file, I got..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: "I expected the analysis to complete and save a report."
+  - type: textarea
+    id: error
+    attributes:
+      label: Error output
+      description: Paste any error messages here
+      render: shell
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Open the project in Zed
+        2. Type "analyze test/sample-xrays/normal/normal-xray-1.jpeg"
+        3. See error...
