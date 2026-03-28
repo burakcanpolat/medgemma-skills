@@ -8,9 +8,10 @@ images/*
 *.dcm
 *.dicom
 
-# Generated reports
+# Generated reports (user data — never commit)
 reports/*
 !reports/.gitkeep
+!reports/sample-report.md
 
 # Generated JSON
 /*.json
