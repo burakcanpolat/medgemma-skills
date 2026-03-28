@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Med-Rehber — Quick Setup
-# Checks prerequisites and guides you to the AI-assisted setup wizard.
+# Installs uv, syncs dependencies, and guides you to the AI-assisted setup wizard.
 
 set -e
 
@@ -22,82 +22,60 @@ fail() { echo -e "${RED}❌ $1${NC}"; }
 info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
 
 # -------------------------------------------------------------------
-# STEP 1: Python Check
+# STEP 1: Check / Install uv
 # -------------------------------------------------------------------
-echo "━━━ Step 1/3: Python Check ━━━"
+echo "━━━ Step 1/3: uv Package Manager ━━━"
 echo ""
 
-PYTHON_CMD=""
-if command -v python3 &>/dev/null; then
-    PYTHON_CMD="python3"
-elif command -v python &>/dev/null; then
-    PYTHON_CMD="python"
-fi
-
-if [ -n "$PYTHON_CMD" ]; then
-    PY_VER_FULL=$($PYTHON_CMD --version 2>&1 | sed 's/Python //')
-    PY_MAJOR=$(echo "$PY_VER_FULL" | cut -d. -f1)
-    PY_MINOR=$(echo "$PY_VER_FULL" | cut -d. -f2)
-
-    if [ "$PY_MAJOR" -gt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 10 ]; }; then
-        ok "Python $PY_VER_FULL is installed."
+if command -v uv &>/dev/null; then
+    UV_VER=$(uv --version 2>&1)
+    ok "uv is installed ($UV_VER)."
+else
+    info "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # Source the env so uv is available in this session
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v uv &>/dev/null; then
+        ok "uv installed successfully."
     else
-        fail "Python $PY_VER_FULL found but 3.10+ is required."
-        PYTHON_CMD=""
+        fail "Could not install uv."
+        echo "  Try manually: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        exit 1
     fi
 fi
 
-if [ -z "$PYTHON_CMD" ]; then
-    fail "Python not found!"
-    echo ""
-    echo "Install Python 3.10+ from: https://www.python.org/downloads/"
-    echo ""
-    case "$(uname -s)" in
-        Darwin*)
-            echo "  Or via Homebrew: brew install python3"
-            ;;
-        Linux*)
-            echo "  Or via apt: sudo apt update && sudo apt install python3 python3-pip -y"
-            ;;
-    esac
-    echo ""
-    echo "After installing, run this script again."
-    exit 1
-fi
-
 # -------------------------------------------------------------------
-# STEP 2: Modal CLI Check
+# STEP 2: Install project dependencies
 # -------------------------------------------------------------------
 echo ""
-echo "━━━ Step 2/3: Modal CLI ━━━"
+echo "━━━ Step 2/3: Project Dependencies ━━━"
+echo ""
+
+info "Running uv sync..."
+uv sync
+ok "Project dependencies installed."
+
+# -------------------------------------------------------------------
+# STEP 3: Install Modal CLI
+# -------------------------------------------------------------------
+echo ""
+echo "━━━ Step 3/3: Modal CLI ━━━"
 echo ""
 
 if command -v modal &>/dev/null; then
-    ok "Modal CLI is installed."
+    ok "Modal CLI is already installed."
 else
     info "Installing Modal CLI..."
-    if command -v uv &>/dev/null; then
-        uv tool install modal 2>/dev/null && ok "Modal CLI installed via uv." || {
-            $PYTHON_CMD -m pip install modal && ok "Modal CLI installed via pip." || {
-                fail "Could not install Modal CLI."
-                echo "  Try manually: pip install modal"
-                exit 1
-            }
-        }
-    else
-        $PYTHON_CMD -m pip install modal && ok "Modal CLI installed via pip." || {
-            fail "Could not install Modal CLI."
-            echo "  Try manually: pip install modal"
-            exit 1
-        }
-    fi
+    uv tool install modal && ok "Modal CLI installed." || {
+        fail "Could not install Modal CLI."
+        echo "  Try manually: uv tool install modal"
+        exit 1
+    }
 fi
 
 # -------------------------------------------------------------------
-# STEP 3: Next Steps
+# Next Steps
 # -------------------------------------------------------------------
-echo ""
-echo "━━━ Step 3/3: Next Steps ━━━"
 echo ""
 echo "================================================"
 ok "Prerequisites are ready!"

@@ -9,88 +9,75 @@ echo ================================================
 echo.
 
 :: -------------------------------------------------------------------
-:: STEP 1: Python Check
+:: STEP 1: Check / Install uv
 :: -------------------------------------------------------------------
-echo --- Step 1/3: Python Check ---
+echo --- Step 1/3: uv Package Manager ---
 echo.
 
-set "PYTHON_CMD="
-
-python --version >nul 2>&1
+uv --version >nul 2>&1
 if %errorlevel%==0 (
-    set "PYTHON_CMD=python"
-    goto :python_found
+    echo [OK] uv is installed.
+    goto :uv_ready
 )
 
-python3 --version >nul 2>&1
-if %errorlevel%==0 (
-    set "PYTHON_CMD=python3"
-    goto :python_found
-)
-
-echo [X] Python not found!
+echo [!] uv is not installed.
 echo.
-echo Install Python 3.10+ from: https://www.python.org/downloads/
+echo Please install uv by running this command in PowerShell:
 echo.
-echo   1. Click the big yellow "Download Python" button
-echo   2. Run the downloaded file
-echo   3. IMPORTANT: Check "Add Python to PATH" at the bottom!
-echo   4. Click "Install Now"
+echo   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 echo.
-echo After installing, run this script again.
+echo After installing, close and reopen this terminal, then run this script again.
 pause
 exit /b 1
 
-:python_found
-for /f "tokens=2" %%v in ('%PYTHON_CMD% --version 2^>^&1') do set "PY_VER=%%v"
-for /f "tokens=1,2 delims=." %%a in ("%PY_VER%") do (
-    set "PY_MAJOR=%%a"
-    set "PY_MINOR=%%b"
-)
-if %PY_MAJOR% LSS 3 goto :python_too_old
-if %PY_MAJOR% EQU 3 if %PY_MINOR% LSS 10 goto :python_too_old
-echo [OK] Python %PY_VER% is installed.
-goto :modal_check
-
-:python_too_old
-echo [X] Python %PY_VER% found but 3.10+ is required!
-echo.
-echo Install Python 3.10+ from: https://www.python.org/downloads/
-pause
-exit /b 1
-
-:modal_check
+:uv_ready
 
 :: -------------------------------------------------------------------
-:: STEP 2: Modal CLI Check
+:: STEP 2: Install project dependencies
 :: -------------------------------------------------------------------
 echo.
-echo --- Step 2/3: Modal CLI ---
+echo --- Step 2/3: Project Dependencies ---
 echo.
 
-modal --version >nul 2>&1
+echo Installing dependencies...
+uv sync
 if %errorlevel%==0 (
-    echo [OK] Modal CLI is installed.
-    goto :next_steps
-)
-
-echo Installing Modal CLI...
-%PYTHON_CMD% -m pip install modal >nul 2>&1
-if %errorlevel%==0 (
-    echo [OK] Modal CLI installed.
+    echo [OK] Project dependencies installed.
 ) else (
-    echo [!] Could not install Modal CLI.
-    echo     Try manually: pip install modal
+    echo [X] Could not install dependencies.
+    echo     Try manually: uv sync
     pause
     exit /b 1
 )
 
 :: -------------------------------------------------------------------
-:: STEP 3: Next Steps
+:: STEP 3: Install Modal CLI
+:: -------------------------------------------------------------------
+echo.
+echo --- Step 3/3: Modal CLI ---
+echo.
+
+modal --version >nul 2>&1
+if %errorlevel%==0 (
+    echo [OK] Modal CLI is already installed.
+    goto :next_steps
+)
+
+echo Installing Modal CLI...
+uv tool install modal
+if %errorlevel%==0 (
+    echo [OK] Modal CLI installed.
+) else (
+    echo [X] Could not install Modal CLI.
+    echo     Try manually: uv tool install modal
+    pause
+    exit /b 1
+)
+
+:: -------------------------------------------------------------------
+:: Next Steps
 :: -------------------------------------------------------------------
 :next_steps
-echo.
-echo --- Step 3/3: Next Steps ---
 echo.
 echo ================================================
 echo [OK] Prerequisites are ready!

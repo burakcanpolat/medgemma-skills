@@ -64,6 +64,8 @@ Go to https://github.com/burakcanpolat/med-rehber → click the green **"Code"**
 **Option B — Git clone:**
 ```bash
 git clone https://github.com/burakcanpolat/med-rehber.git
+cd med-rehber
+uv sync
 ```
 
 ### Step 2: Open in an AI editor
@@ -161,6 +163,7 @@ git clone https://github.com/burakcanpolat/med-rehber.git
 npm install -g @anthropic-ai/claude-code
 git clone https://github.com/burakcanpolat/med-rehber.git
 cd med-rehber
+uv sync
 claude
 ```
 
@@ -183,10 +186,10 @@ Ask the AI assistant in your editor:
 ### From Terminal
 
 ```bash
-python3 scripts/medgemma_api.py images/xray.jpeg              # single image
-python3 scripts/medgemma_api.py scan.dcm                      # single DICOM
-python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
-python3 scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
+uv run python scripts/medgemma_api.py images/xray.jpeg              # single image
+uv run python scripts/medgemma_api.py scan.dcm                      # single DICOM
+uv run python scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
+uv run python scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
 ```
 
 > DICOM files (.dcm) are automatically converted to JPEG with appropriate windowing before analysis. All images are sent as base64-encoded data inline in the request. Cold starts are handled automatically with progress feedback (typically 1-3 minutes).
@@ -237,7 +240,8 @@ Med-Rehber supports **English** and **Turkish**. On first use, the AI will ask y
 
 ## Requirements
 
-- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) (installed during setup: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Python 3.10+ (uv handles installation and resolution automatically)
 - Internet connection
 - Modal account (free — $30/month credit, created during setup)
 - HuggingFace account (free — needed to access MedGemma model)

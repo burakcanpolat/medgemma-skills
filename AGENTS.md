@@ -159,10 +159,10 @@ Include DICOM metadata context when reporting findings: mention the modality, bo
 For image analysis, use `scripts/medgemma_api.py`:
 
 ```bash
-python3 scripts/medgemma_api.py images/xray.jpeg              # single image
-python3 scripts/medgemma_api.py scan.dcm                      # single DICOM
-python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
-python3 scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
+uv run python scripts/medgemma_api.py images/xray.jpeg              # single image
+uv run python scripts/medgemma_api.py scan.dcm                      # single DICOM
+uv run python scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
+uv run python scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
 ```
 
 DICOM files (.dcm) are automatically converted to JPEG with appropriate windowing before analysis.

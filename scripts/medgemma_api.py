@@ -13,12 +13,10 @@ Cold start handling:
 Modal config: --limit-mm-per-prompt image=85 (max 85 images per request)
 
 Usage:
-  python3 scripts/medgemma_api.py images/xray.jpeg              # single image
-  python3 scripts/medgemma_api.py scan.dcm                      # single DICOM
-  python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
-  python3 scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
-
-Note: On Windows, use `python` instead of `python3` if `python3` is not available.
+  uv run python scripts/medgemma_api.py images/xray.jpeg              # single image
+  uv run python scripts/medgemma_api.py scan.dcm                      # single DICOM
+  uv run python scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images
+  uv run python scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)
 """
 
 import base64
@@ -644,10 +642,10 @@ def process_zip(zip_path: str | Path) -> dict:
 
 def _print_usage():
     print("Usage:")
-    print("  python3 scripts/medgemma_api.py images/xray.jpeg              # single image")
-    print("  python3 scripts/medgemma_api.py scan.dcm                      # single DICOM")
-    print("  python3 scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images")
-    print("  python3 scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)")
+    print("  uv run python scripts/medgemma_api.py images/xray.jpeg              # single image")
+    print("  uv run python scripts/medgemma_api.py scan.dcm                      # single DICOM")
+    print("  uv run python scripts/medgemma_api.py images/d0.jpg images/d1.jpg   # multiple images")
+    print("  uv run python scripts/medgemma_api.py archive.zip                   # ZIP archive (JPEG, DICOM, or mixed)")
 
 
 if __name__ == "__main__":

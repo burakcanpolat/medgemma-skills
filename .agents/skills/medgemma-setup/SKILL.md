@@ -103,11 +103,11 @@ Go to STEP 2.
 
 ---
 
-## STEP 2: Python Check
+## STEP 2: uv Check
 
 Run in terminal:
 ```bash
-python3 --version 2>/dev/null || python --version 2>/dev/null
+uv --version 2>/dev/null || echo "NOT_FOUND"
 ```
 
 Also detect the platform:
@@ -117,73 +117,72 @@ uname -s 2>/dev/null || echo "Windows"
 
 **Platform detection note:** On Windows with Git Bash, `uname -s` returns `MINGW64_NT-...` or `MSYS_NT-...`. Treat these as Windows. On macOS it returns `Darwin`, on Linux it returns `Linux`.
 
-### If Python 3.10+ is found:
+### If uv is found:
 
 ```
-✅ Python {version} is installed.
+✅ uv is installed!
+
+Now let me install the project dependencies...
+```
+
+Run in terminal:
+```bash
+uv sync
+```
+
+This installs all project dependencies (and Python itself if needed — uv handles everything automatically).
+
+```
+✅ Dependencies installed!
 
 Moving to the next step...
 ```
 
 Go to STEP 3.
 
-### If Python is missing or too old:
+### If uv is NOT found:
 
-Guide based on platform. **Tell the user what to do in the browser — do NOT ask them to run terminal commands:**
+Guide based on platform:
+
+**macOS / Linux:**
+```
+I need to install a small tool called uv first. It manages all the technical stuff for us.
+```
+
+Run the install command yourself (the user does NOT need to do this):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then make it available in the current session:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
 
 **Windows:**
 ```
-Python is not installed yet. Here's how to get it:
+I need to install a small tool called uv first. It manages all the technical stuff for us.
+Please run this command in PowerShell (I can't do this part for you):
 
-1. Open this link in your browser:
-   https://www.python.org/downloads/
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-2. Click the big yellow "Download Python" button
-
-3. Run the downloaded file
-
-4. ⚠️ VERY IMPORTANT: On the first screen of the installer,
-   check the box that says "Add Python to PATH" at the bottom!
-
-5. Click "Install Now" and wait for it to finish
-
-6. Close and reopen this editor (so it can find Python)
-
-Tell me "done" when you've installed it.
+After it finishes, close and reopen this editor, then tell me "done".
 ```
 
-**macOS:**
-```
-Python is not installed yet. Here's how to get it:
-
-1. Open this link in your browser:
-   https://www.python.org/downloads/
-
-2. Click the big yellow "Download Python" button
-
-3. Open the downloaded .pkg file and follow the installer
-
-4. When done, close and reopen this editor
-
-Tell me "done" when you've installed it.
+Once uv is installed, run:
+```bash
+uv sync
 ```
 
-**Linux:**
-```
-Python is not installed yet. Let me install it for you.
-```
-Run the install command yourself (the user does NOT need to do this):
-- Debian/Ubuntu: `sudo apt update && sudo apt install python3 python3-pip -y`
-- Fedora: `sudo dnf install python3 python3-pip -y`
+This installs all project dependencies (and Python itself if needed — uv handles everything automatically).
 
-If `sudo` requires a password, tell the user:
 ```
-I need your permission to install Python. Please type your password when prompted.
+✅ uv and dependencies are ready!
 ```
 
-When the user says "done", re-check Python version. If still missing:
+When the user says "done", re-check uv. If still missing:
 ```
-Hmm, Python still isn't detected. This usually means the editor needs a restart.
+Hmm, uv still isn't detected. This usually means the editor needs a restart.
 Please close this editor completely and reopen it, then tell me "start setup"
 and we'll continue from here.
 ```
@@ -219,17 +218,12 @@ I need to install a small tool first...
 
 Run in terminal:
 ```bash
-uv tool install modal 2>/dev/null || pipx install modal 2>/dev/null || python3 -m pip install --user modal 2>/dev/null || pip3 install modal
+uv tool install modal
 ```
 
 Check if it worked:
 ```bash
 modal --version 2>/dev/null || echo "NOT_FOUND"
-```
-
-If NOT_FOUND, try:
-```bash
-python3 -m pip install --user modal 2>/dev/null || python -m pip install --user modal 2>/dev/null
 ```
 
 Once installed:
@@ -433,7 +427,7 @@ Go to STEP 8.
 
 Run in terminal:
 ```bash
-python3 scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1 || python scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1
+uv run python scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1
 ```
 
 The script will show `[SERVER] Server is starting up (cold start)...` and progress messages while waiting. This is normal — just wait for it to finish.
@@ -484,17 +478,17 @@ Which would you like to try? (1, 2, or 3)
 
 **If user chooses 1:**
 ```bash
-python3 scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1 || python scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1
+uv run python scripts/medgemma_api.py test/sample-xrays/normal/normal-xray-1.jpeg 2>&1
 ```
 
 **If user chooses 2:**
 ```bash
-python3 scripts/medgemma_api.py test/sample-xrays/pneumonia/pneumonia-xray-1.jpeg 2>&1 || python scripts/medgemma_api.py test/sample-xrays/pneumonia/pneumonia-xray-1.jpeg 2>&1
+uv run python scripts/medgemma_api.py test/sample-xrays/pneumonia/pneumonia-xray-1.jpeg 2>&1
 ```
 
 **If user chooses 3:**
 ```bash
-python3 scripts/medgemma_api.py test/sample-xrays/temporal/temporal-day0.jpg test/sample-xrays/temporal/temporal-day1.jpg test/sample-xrays/temporal/temporal-day2.jpg 2>&1 || python scripts/medgemma_api.py test/sample-xrays/temporal/temporal-day0.jpg test/sample-xrays/temporal/temporal-day1.jpg test/sample-xrays/temporal/temporal-day2.jpg 2>&1
+uv run python scripts/medgemma_api.py test/sample-xrays/temporal/temporal-day0.jpg test/sample-xrays/temporal/temporal-day1.jpg test/sample-xrays/temporal/temporal-day2.jpg 2>&1
 ```
 
 Take the MedGemma output and create a report in the user's language using the format from `.agents/skills/medgemma-radiology/SKILL.md` (4 sections: WHAT DO WE SEE / WHAT DOES IT MEAN / HOW CONFIDENT ARE WE / WHAT SHOULD WE DO).
