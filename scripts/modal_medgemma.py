@@ -77,7 +77,7 @@ def serve():
         "--served-model-name", MODEL_NAME,
         "--trust-remote-code",
         "--dtype", "bfloat16",
-        "--max-model-len", "4096",
+        "--max-model-len", "32768",
         "--enforce-eager",
         "--gpu-memory-utilization", "0.90",
         "--limit-mm-per-prompt", '{"image": 85}',
