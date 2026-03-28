@@ -16,6 +16,11 @@ Powered by [MedGemma](https://huggingface.co/google/medgemma-1.5-4b-it) | Works 
 
 </div>
 
+> [!CAUTION]
+> **This software is NOT a medical device and is NOT intended to diagnose, treat, cure, or prevent any disease or medical condition.** All outputs are AI-generated, may contain errors, and are provided strictly for educational and informational purposes. **Never use this tool as a substitute for professional medical advice, diagnosis, or treatment.** Always consult a qualified healthcare provider for any medical concerns. Misuse of AI-generated medical information can be dangerous. The authors assume no liability for any decisions made based on this tool's output.
+>
+> **Bu yazılım tıbbi bir cihaz DEĞİLDİR ve herhangi bir hastalığı teşhis, tedavi veya önleme amacı taşımaz.** Tüm çıktılar yapay zeka tarafından üretilir, hata içerebilir ve yalnızca eğitim ve bilgilendirme amaçlıdır. **Bu aracı profesyonel tıbbi tavsiye, teşhis veya tedavinin yerine asla kullanmayın.** Herhangi bir sağlık sorununuz için mutlaka nitelikli bir sağlık uzmanına başvurun. Yapay zeka tarafından üretilen tıbbi bilgilerin yanlış kullanımı tehlikeli olabilir. Yazarlar, bu aracın çıktılarına dayanarak alınan kararlardan hiçbir sorumluluk kabul etmez.
+
 ---
 
 ## What Does It Do?
